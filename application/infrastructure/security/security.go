@@ -43,6 +43,7 @@ func RSAPublicKeyToJWK(pub *rsa.PublicKey, kid string) entity.JWK {
     }
 }
 
+// SignJWT signs the given access token claims using the provided RSA private key and returns the JWT string.
 func (s *TokenService) SignJWT(ctx context.Context, claims entity.AccessTokenClaims,  privateKey *rsa.PrivateKey,  kid string) (string, error) {
     logger.InfoOutCtx("signing JWT with provided claims")
 
@@ -85,6 +86,7 @@ func (s *TokenService) SignJWT(ctx context.Context, claims entity.AccessTokenCla
     return tokenString, nil
 }
 
+// VerifyJWT verifies the given JWT string using the provided RSA public key and returns the access token claims if the token is valid.
 func (s *TokenService) VerifyJWT(ctx context.Context, tokenString string, publicKey *rsa.PublicKey) (*entity.AccessTokenClaims, error) {
     logger.InfoOutCtx("verifying JWT with provided token string")
 
