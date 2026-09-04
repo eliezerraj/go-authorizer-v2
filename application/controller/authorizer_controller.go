@@ -68,3 +68,23 @@ func (p *AuthorizerController) VerifyJWT(ctx context.Context, req external.Verif
 
 	return p.loginUseCase.VerifyJWT(ctx, req.Token)
 }
+
+func (p *AuthorizerController) WellKnownJwksGet(ctx context.Context) (*entity.WellKnownJwks, error) {
+	logger.Info(ctx, "authorizer controller WellKnownJwks called")
+
+	// Tracing and metrics
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "authorizerController.WellKnownJwksGet", trace.SpanKindInternal)
+	defer span.End()
+
+	return p.loginUseCase.WellKnownJwksGet(ctx)
+}
+
+func (p *AuthorizerController) RefreshToken(ctx context.Context, req external.VerifyJWTRequest) (*entity.OAuthToken, error) {
+	logger.Info(ctx, "authorizer controller RefreshToken called")
+
+	// Tracing and metrics
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "authorizerController.refreshToken", trace.SpanKindInternal)
+	defer span.End()
+
+	return p.loginUseCase.RefreshToken(ctx, req.Token)
+}
