@@ -78,3 +78,13 @@ func (p *AuthorizerController) WellKnownJwksGet(ctx context.Context) (*entity.We
 
 	return p.loginUseCase.WellKnownJwksGet(ctx)
 }
+
+func (p *AuthorizerController) RefreshToken(ctx context.Context, req external.VerifyJWTRequest) (*entity.OAuthToken, error) {
+	logger.Info(ctx, "authorizer controller RefreshToken called")
+
+	// Tracing and metrics
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "authorizerController.refreshToken", trace.SpanKindInternal)
+	defer span.End()
+
+	return p.loginUseCase.RefreshToken(ctx, req.Token)
+}
