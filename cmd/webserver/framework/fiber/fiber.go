@@ -105,6 +105,7 @@ func (s *FiberServer) SetupRoutes(application *application.Application) {
 	appRoutes.Get("/echo-header", adapters.metadataAdp.HeadersGet)
 	appRoutes.Get("/echo-context", adapters.metadataAdp.ContextGet)
 
+	appRoutes.Get("/.well-known/jwks.json", adapters.applicationAdp.WellKnownJwksGet)
 	appRoutes.Post("/login", middleware.MetricsMiddleware(adapters.applicationAdp.Login))
 	appRoutes.Post("/verify/jwt", middleware.MetricsMiddleware(adapters.applicationAdp.VerifyJWT))
 }

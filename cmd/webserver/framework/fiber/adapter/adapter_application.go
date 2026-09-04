@@ -138,3 +138,38 @@ func (a *ApplicationAdapter) VerifyJWT(ctxFiber *fiber.Ctx) error {
 
 	return ctxFiber.Status(fiber.StatusOK).JSON(resp)
 }
+
+func (a *ApplicationAdapter) WellKnownJwksGet(ctxFiber *fiber.Ctx) error {
+	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
+	defer cancel()
+
+	// Tracing and metrics
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.wellKnownJwksGet", trace.SpanKindInternal)
+	defer span.End()
+
+	logger.Debug(
+		ctx,
+		a.cfg.App.Name,
+		zap.ByteString("headers", utils.FormatHeadersAsJSON(ctxFiber.GetReqHeaders())),
+		zap.String("host", ctxFiber.Hostname()),
+		zap.String("path", ctxFiber.Path()),
+		zap.ByteString("query", ctxFiber.Request().URI().QueryString()),
+	)
+
+	logger.Info(ctx, "WellKnownJwksGet called")
+
+	jwks, err := a.application.AuthorizerController.WellKnownJwksGet(ctx)
+	if err != nil {
+		logger.Error(ctx, "failed to get JWKS", zap.Error(err))
+		errorResponse := external.NewResponseError(ctx,
+			fiber.StatusInternalServerError,
+			fiber.ErrInternalServerError,
+			fiber.ErrInternalServerError.Message,
+			"failed to get JWKS",
+			err.Error(),
+			external.BUSSINESS_ERROR)
+		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
+	}
+
+	return ctxFiber.Status(fiber.StatusOK).JSON(jwks)
+}
