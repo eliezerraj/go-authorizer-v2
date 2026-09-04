@@ -26,6 +26,7 @@ type LoginUseCase struct {
 type ILoginUseCase interface {
 	Login(ctx context.Context, login entity.Login) (*entity.OAuthToken, error)
 	VerifyJWT(ctx context.Context, tokenString string) (*entity.AccessTokenClaims, error)
+	WellKnownJwksGet(ctx context.Context) (*entity.WellKnownJwks, error)
 }
 
 func NewLoginUseCase(tokenTTL time.Duration, keyRepository repository.IKeyRepository, tokenService security.ITokenService) ILoginUseCase {
@@ -101,4 +102,22 @@ func (uc *LoginUseCase) VerifyJWT(ctx context.Context, tokenString string) (*ent
 	}
 
 	return uc.tokenService.VerifyJWT(ctx, tokenString, pubKey)
+}
+
+func (uc *LoginUseCase) WellKnownJwksGet(ctx context.Context) (*entity.WellKnownJwks, error) {
+	logger.Info(ctx, "login usecase WellKnownJwksGet called")
+
+	// Tracer for OpenTelemetry
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "loginUsecase.WellKnownJwksGet", trace.SpanKindInternal)
+	defer span.End()
+
+	jwk, err := uc.keyRepository.GetAllPublicKeys(ctx)
+	if err != nil {
+		logger.ErrorOutCtx("error getting active public key", zap.Any("error", err))
+		return nil, err
+	}
+	
+	return &entity.WellKnownJwks{
+		Keys: jwk,
+	}, nil
 }

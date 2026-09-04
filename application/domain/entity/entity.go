@@ -41,6 +41,10 @@ type Confirmation struct {
     Jkt string `json:"jkt,omitempty"`
 }
 
+type WellKnownJwks struct{
+	Keys	[]JWK   `json:"keys"`
+}
+
 type JWK struct {
     KeyID     string `json:"kid"`
     KeyType   string `json:"kty"` // RSA
