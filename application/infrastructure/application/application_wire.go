@@ -74,7 +74,7 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 		return nil, err
 	}
 	
-	// Repository initialization
+	// Authorizer Repository initialization (where the RSA keys are loaded and managed)
 	keyRepository, err := repository.NewKeyRepository(cfg.RSAKeys.PrivateKeyPath, cfg.RSAKeys.PublicKeyPath, cfg.RSAKeys.KID)
 	if err != nil {
 		logger.FatalOutCtx("failed to initialize key repository")

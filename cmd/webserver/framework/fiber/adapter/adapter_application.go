@@ -63,7 +63,7 @@ func (a *ApplicationAdapter) Login(ctxFiber *fiber.Ctx) error {
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 	
-	loginRes, err := a.application.AuthorizerController.Login(ctx, loginReq)
+	accessToken, err := a.application.AuthorizerController.Login(ctx, loginReq)
 	if err != nil {
 		logger.Error(ctx, "failed to login", zap.Error(err))
 		errorResponse := external.NewResponseError(ctx,
@@ -76,12 +76,7 @@ func (a *ApplicationAdapter) Login(ctxFiber *fiber.Ctx) error {
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
-	resp := external.LoginResponse{
-		Response: "Login successful",
-		Login: loginRes,
-	}
-	
-	return ctxFiber.Status(fiber.StatusOK).JSON(resp)
+	return ctxFiber.Status(fiber.StatusOK).JSON(accessToken)
 }
 
 func (a *ApplicationAdapter) VerifyJWT(ctxFiber *fiber.Ctx) error {
@@ -216,9 +211,5 @@ func (a *ApplicationAdapter) RefreshToken(ctxFiber *fiber.Ctx) error {
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
-	resp := external.VerifyJWTResponse{
-		Response: "Token refreshed successfully",
-		Claims:   tokenRefreshed,
-	}
-	return ctxFiber.Status(fiber.StatusOK).JSON(resp)
+	return ctxFiber.Status(fiber.StatusOK).JSON(tokenRefreshed)
 }
