@@ -9,13 +9,13 @@ WORKDIR /app
 COPY . .
 RUN go mod tidy
 
-WORKDIR /app/cmd
+WORKDIR /app
 RUN go build -o go-authorizer-v2 -ldflags '-linkmode external -w -extldflags "-static"'
 
 FROM alpine
 
 WORKDIR /app
-COPY --from=builder /app/cmd/go-authorizer-v2 .
+COPY --from=builder /app/go-authorizer-v2 .
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 CMD ["/app/go-authorizer-v2"]
