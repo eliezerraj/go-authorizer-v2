@@ -24,10 +24,6 @@ type UseCase struct {
 	LoginUseCase usecase.ILoginUseCase
 }
 
-type Repository struct {
-	KeyRepository *repository.KeyRepository
-}
-
 func NewApplication(cfg *config.Config) (*Application, error) {
 	logger.InfoOutCtx("initializing application SUCCESSFULLY")
 
@@ -75,20 +71,28 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 	}
 	
 	// Authorizer Repository initialization (where the RSA keys are loaded and managed)
-	keyRepository, err := repository.NewKeyRepository(cfg.RSAKeys.PrivateKeyPath, cfg.RSAKeys.PublicKeyPath, cfg.RSAKeys.KID)
+	rsaKeyRepository, err := repository.NewKeyRepository(cfg.RSAKeys.PrivateKeyPath, cfg.RSAKeys.PublicKeyPath, cfg.RSAKeys.KID)
 	if err != nil {
 		logger.FatalOutCtx("failed to initialize key repository")
+		return nil, err
+	}
+
+	// ES256 Key Repository initialization
+	ec256KeyRepository, err := repository.NewEC256KeyRepository(cfg.EC256Keys.PublicKeyPath, cfg.EC256Keys.KID)
+	if err != nil {
+		logger.FatalOutCtx("failed to initialize EC256 key repository")
 		return nil, err
 	}
 
 	// Service Security initialization
 	tokenService := security.NewTokenService()
 
-	// UseCase initialization
-	loginUsecase := usecase.NewLoginUseCase(cfg.TokenConfig.TokenTTL, keyRepository, tokenService) 
+	// UseCase initialization RSA and ES256
+	loginUsecase := usecase.NewLoginUseCase(cfg.TokenConfig.TokenTTL, rsaKeyRepository, tokenService)
+	apiKeyUsecase := usecase.NewApiKeyUseCase(ec256KeyRepository)
 
 	// Controller initialization
-	authorizerController := controller.NewAuthorizerController(loginUsecase)
+	authorizerController := controller.NewAuthorizerController(loginUsecase, apiKeyUsecase)
 
 	return &Application{
 		AuthorizerController: authorizerController,

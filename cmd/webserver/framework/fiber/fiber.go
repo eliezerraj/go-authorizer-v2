@@ -109,4 +109,6 @@ func (s *FiberServer) SetupRoutes(application *application.Application) {
 	appRoutes.Post("/auth", middleware.MetricsMiddleware(adapters.applicationAdp.Login))
 	appRoutes.Post("/verify/jwt", middleware.MetricsMiddleware(adapters.applicationAdp.VerifyJWT))
 	appRoutes.Post("/refresh/token", middleware.MetricsMiddleware(adapters.applicationAdp.RefreshToken))
+
+	appRoutes.Post("/verify/es256/jwt", middleware.MetricsMiddleware(adapters.applicationAdp.VerifyES256JWT))
 }
