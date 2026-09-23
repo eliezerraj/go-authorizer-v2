@@ -30,10 +30,10 @@ type AccessTokenClaims struct {
     Audience  []string      `json:"aud"`
     ExpiresAt time.Time     `json:"exp"`
     IssuedAt  time.Time     `json:"iat"`
-    NotBefore time.Time     `json:"nbf"`
+    NotBefore time.Time     `json:"nbf,omitempty"`
     JWTID     string        `json:"jti"`
-    ClientID  string        `json:"client_id"`
-    Scope     string        `json:"scope"`
+    ClientID  string        `json:"client_id,omitempty"`
+    Scope     string        `json:"scope,omitempty"`
     Cnf       *Confirmation `json:"cnf,omitempty"` // For DPoP thumbprint (jkt)
 }
 
@@ -60,4 +60,16 @@ type OAuthToken struct {
     ExpiresIn    int    `json:"expires_in,omitempty"`
     RefreshToken string `json:"refresh_token,omitempty"`
     Scope        string `json:"scope,omitempty"`
+}
+
+// ------
+
+type JWKS struct {
+    KeyID     string `json:"kid"`
+    KeyType   string `json:"kty"` // RSA
+    Crv       string `json:"crv"` // Curve name for EC keys
+    Algorithm string `json:"alg"` // RS256
+    Use       string `json:"use"` // sig
+    X         string `json:"x"`   // Base64URL-encoded X coordinate for EC keys
+    Y         string `json:"y"`   // Base64URL-encoded Y coordinate for EC keys
 }

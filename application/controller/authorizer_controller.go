@@ -19,10 +19,11 @@ import (
 type AuthorizerController struct {
 	schema validator.Schema
 	loginUseCase usecase.ILoginUseCase
+	apiKeyUseCase usecase.IApiKeyUseCase
 }
 
 // NewAuthorizerController creates a new instance of AuthorizerController with the provided login use case.
-func NewAuthorizerController(loginUseCase usecase.ILoginUseCase) *AuthorizerController {
+func NewAuthorizerController(loginUseCase usecase.ILoginUseCase, apiKeyUseCase usecase.IApiKeyUseCase) *AuthorizerController {
 	logger.InfoOutCtx("initializing authorizer controller SUCCESSFULLY")
 
 	schema := validator.Schema{
@@ -34,6 +35,7 @@ func NewAuthorizerController(loginUseCase usecase.ILoginUseCase) *AuthorizerCont
 	return &AuthorizerController{
 		schema:       schema,
 		loginUseCase: loginUseCase,
+		apiKeyUseCase: apiKeyUseCase,
 	}
 }
 
@@ -87,4 +89,14 @@ func (p *AuthorizerController) RefreshToken(ctx context.Context, req external.Ve
 	defer span.End()
 
 	return p.loginUseCase.RefreshToken(ctx, req.Token)
+}
+
+func (p *AuthorizerController) VerifyES256JWT(ctx context.Context, req external.VerifyJWTRequest) (*entity.AccessTokenClaims, error) {
+	logger.Info(ctx, "authorizer controller VerifyES256JWT called")
+
+	// Tracing and metrics
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "authorizerController.verifyES256JWT", trace.SpanKindInternal)
+	defer span.End()
+
+	return p.apiKeyUseCase.VerifyJwtES256(ctx, req.Token)
 }

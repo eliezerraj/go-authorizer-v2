@@ -65,7 +65,8 @@ type Log struct {
 type Config struct {
 	App         App
 	HTTP        HTTP
-	RSAKeys     RSAKeys	
+	RSAKeys     RSAKeys
+	EC256Keys   EC256Keys
 	Database    Database
 	Log         Log
 	OtelEnv		OtelEnv
@@ -80,6 +81,11 @@ type RSAKeys struct {
 	PrivateKeyPath string `env:"RSA_PRIVATE_KEY_PATH"`
 	PublicKeyPath  string `env:"RSA_PUBLIC_KEY_PATH"`
 	KID     		string `env:"CURRENT_KID"`
+}
+
+type EC256Keys struct {
+	PublicKeyPath 	string `env:"EC256_PUBLIC_KEY_PATH"`
+	KID     		string `env:"EC256_KID"`
 }
 
 type OtelEnv struct {
