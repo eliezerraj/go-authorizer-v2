@@ -12,7 +12,7 @@ import (
 	"github.com/eliezerraj/go-core/v3/logger"
 	"github.com/eliezerraj/go-core/v3/http/utils"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 
 	"go.opentelemetry.io/otel/trace"
 )
@@ -23,7 +23,7 @@ type ApplicationAdapter struct {
 }
 
 func NewApplicationAdapter(cfg *config.Config, application *application.Application) *ApplicationAdapter {
-	logger.InfoOutCtx("initializing application adapter SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing application adapter SUCCESSFULLY")
 
 	return &ApplicationAdapter{
 		cfg:         cfg,
@@ -31,14 +31,15 @@ func NewApplicationAdapter(cfg *config.Config, application *application.Applicat
 	}
 }
 
-func (a *ApplicationAdapter) Login(ctxFiber *fiber.Ctx) error {
-	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
+func (a *ApplicationAdapter) Login(ctxFiber fiber.Ctx) error {
+	logger.Info(ctxFiber.Context(), "Login called")
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
 	// Tracing and metrics
 	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.login", trace.SpanKindInternal)
 	defer span.End()
-	logger.Info(ctx, "Login called")
 
 	logger.Debug(
 		ctx,
@@ -51,7 +52,7 @@ func (a *ApplicationAdapter) Login(ctxFiber *fiber.Ctx) error {
 	)
 
 	loginReq := external.LoginRequest{}
-	if err := ctxFiber.BodyParser(&loginReq); err != nil {
+	if err := ctxFiber.Bind().Body(&loginReq); err != nil {
 		logger.Error(ctx, "failed to parse request body", zap.Error(err))
 		errorResponse := external.NewResponseError(ctx,
 			fiber.StatusBadRequest,
@@ -79,14 +80,15 @@ func (a *ApplicationAdapter) Login(ctxFiber *fiber.Ctx) error {
 	return ctxFiber.Status(fiber.StatusOK).JSON(accessToken)
 }
 
-func (a *ApplicationAdapter) VerifyJWT(ctxFiber *fiber.Ctx) error {
-	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
+func (a *ApplicationAdapter) VerifyJWT(ctxFiber fiber.Ctx) error {
+	logger.Info(ctxFiber.Context(), "VerifyJWT called")
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
 	// Tracing and metrics
 	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.verifyJWT", trace.SpanKindInternal)
 	defer span.End()
-	logger.Info(ctx, "VerifyJWT called")
 
 	logger.Debug(
 		ctx,
@@ -99,7 +101,7 @@ func (a *ApplicationAdapter) VerifyJWT(ctxFiber *fiber.Ctx) error {
 	)
 
 	verifyJWTReq := external.VerifyJWTRequest{}
-	if err := ctxFiber.BodyParser(&verifyJWTReq); err != nil {
+	if err := ctxFiber.Bind().Body(&verifyJWTReq); err != nil {
 		logger.Error(ctx, "failed to parse request body", zap.Error(err))
 		errorResponse := external.NewResponseError(ctx,
 			fiber.StatusBadRequest,
@@ -132,14 +134,15 @@ func (a *ApplicationAdapter) VerifyJWT(ctxFiber *fiber.Ctx) error {
 	return ctxFiber.Status(fiber.StatusOK).JSON(resp)
 }
 
-func (a *ApplicationAdapter) WellKnownJwksGet(ctxFiber *fiber.Ctx) error {
-	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
+func (a *ApplicationAdapter) WellKnownJwksGet(ctxFiber fiber.Ctx) error {
+	logger.Info(ctxFiber.Context(), "WellKnownJwksGet called")
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
 	// Tracing and metrics
 	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.wellKnownJwksGet", trace.SpanKindInternal)
 	defer span.End()
-	logger.Info(ctx, "WellKnownJwksGet called")
 
 	logger.Debug(
 		ctx,
@@ -166,14 +169,15 @@ func (a *ApplicationAdapter) WellKnownJwksGet(ctxFiber *fiber.Ctx) error {
 	return ctxFiber.Status(fiber.StatusOK).JSON(jwks)
 }
 
-func (a *ApplicationAdapter) RefreshToken(ctxFiber *fiber.Ctx) error {
-	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
+func (a *ApplicationAdapter) RefreshToken(ctxFiber fiber.Ctx) error {
+	logger.Info(ctxFiber.Context(), "RefreshToken called")
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
 	// Tracing and metrics
 	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.refreshToken", trace.SpanKindInternal)
 	defer span.End()
-	logger.Info(ctx, "RefreshToken called")
 
 	logger.Debug(
 		ctx,
@@ -185,7 +189,7 @@ func (a *ApplicationAdapter) RefreshToken(ctxFiber *fiber.Ctx) error {
 	)
 
 	verifyJWTReq := external.VerifyJWTRequest{}
-	if err := ctxFiber.BodyParser(&verifyJWTReq); err != nil {
+	if err := ctxFiber.Bind().Body(&verifyJWTReq); err != nil {
 		logger.Error(ctx, "failed to parse request body", zap.Error(err))
 		errorResponse := external.NewResponseError(ctx,
 			fiber.StatusBadRequest,
@@ -215,14 +219,15 @@ func (a *ApplicationAdapter) RefreshToken(ctxFiber *fiber.Ctx) error {
 }
 
 // VerifyES256JWT handles the verification of ES256 JWT tokens.
-func (a *ApplicationAdapter) VerifyES256JWT(ctxFiber *fiber.Ctx) error {
-	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
+func (a *ApplicationAdapter) VerifyES256JWT(ctxFiber fiber.Ctx) error {
+	logger.Info(ctxFiber.Context(), "VerifyES256JWT called")
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
 	// Tracing and metrics
 	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.verifyES256JWT", trace.SpanKindInternal)
 	defer span.End()
-	logger.Info(ctx, "VerifyES256JWT called")
 
 	logger.Debug(
 		ctx,
@@ -235,7 +240,7 @@ func (a *ApplicationAdapter) VerifyES256JWT(ctxFiber *fiber.Ctx) error {
 	)
 
 	verifyJWTReq := external.VerifyJWTRequest{}
-	if err := ctxFiber.BodyParser(&verifyJWTReq); err != nil {
+	if err := ctxFiber.Bind().Body(&verifyJWTReq); err != nil {
 		logger.Error(ctx, "failed to parse request body", zap.Error(err))
 		errorResponse := external.NewResponseError(ctx,
 			fiber.StatusBadRequest,

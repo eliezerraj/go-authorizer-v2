@@ -24,7 +24,7 @@ type AuthorizerController struct {
 
 // NewAuthorizerController creates a new instance of AuthorizerController with the provided login use case.
 func NewAuthorizerController(loginUseCase usecase.ILoginUseCase, apiKeyUseCase usecase.IApiKeyUseCase) *AuthorizerController {
-	logger.InfoOutCtx("initializing authorizer controller SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing authorizer controller SUCCESSFULLY")
 
 	schema := validator.Schema{
 			Validate: func(ctx context.Context, data any) error {

@@ -27,27 +27,27 @@ type IKeyRepository interface {
 
 // NewKeyRepository load the RSA private and public keys from the given PEM file paths and initializes a new KeyRepository.
 func NewKeyRepository(privateKeyPEMPath, publicKeyPEMPath, kid string) (*KeyRepository, error) {
-    logger.InfoOutCtx("initializing NewKeyRepository SUCCESSFULLY")
+    logger.Info(context.Background(), "initializing NewKeyRepository SUCCESSFULLY")
 
     pemBytes, err := os.ReadFile(privateKeyPEMPath)
     if err != nil {
-        logger.ErrorOutCtx("error reading private key PEM file", zap.Any("error", err))
+        logger.Error(context.Background(), "error reading private key PEM file", zap.Any("error", err))
         return nil, err
     }
     privKey, err := jwt.ParseRSAPrivateKeyFromPEM(pemBytes)
     if err != nil {
-        logger.ErrorOutCtx("error parsing RSA private key from PEM", zap.Any("error", err))
+        logger.Error(context.Background(), "error parsing RSA private key from PEM", zap.Any("error", err))
         return nil, err
     }
 
     pemBytes, err = os.ReadFile(publicKeyPEMPath)
     if err != nil {
-        logger.ErrorOutCtx("error reading public key PEM file", zap.Any("error", err))
+        logger.Error(context.Background(), "error reading public key PEM file", zap.Any("error", err))
         return nil, err
     }
     pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pemBytes)
     if err != nil {
-        logger.ErrorOutCtx("error parsing RSA public key from PEM", zap.Any("error", err))
+        logger.Error(context.Background(), "error parsing RSA public key from PEM", zap.Any("error", err))
         return nil, err
     }
 

@@ -22,16 +22,16 @@ type IES256KeyRepository interface {
 
 // NewEC256KeyRepository load the EC256 public key from the given PEM file path and initializes a new EC256KeyRepository.
 func NewEC256KeyRepository(publicKeyPEMPath, kid string) (*EC256KeyRepository, error) {
-    logger.InfoOutCtx("initializing NewEC256KeyRepository SUCCESSFULLY")
+    logger.Info(context.Background(), "initializing NewEC256KeyRepository SUCCESSFULLY")
 
     pemBytes, err := os.ReadFile(publicKeyPEMPath)
     if err != nil {
-        logger.ErrorOutCtx("error reading public key PEM file", zap.Any("error", err))
+        logger.Error(context.Background(), "error reading public key PEM file", zap.Any("error", err))
         return nil, err
     }
     pubKey, err := jwt.ParseECPublicKeyFromPEM(pemBytes)
     if err != nil {
-        logger.ErrorOutCtx("error parsing ES256 public key from PEM", zap.Any("error", err))
+        logger.Error(context.Background(), "error parsing ES256 public key from PEM", zap.Any("error", err))
         return nil, err
     }
 
