@@ -24,7 +24,7 @@ type ITokenService interface {
 }
 
 func NewTokenService() ITokenService {
-    logger.InfoOutCtx("initializing JWTTokenService SUCCESSFULLY")
+    logger.Info(context.Background(), "initializing JWTTokenService SUCCESSFULLY")
     
     return &TokenService{}
 }
@@ -45,10 +45,10 @@ func RSAPublicKeyToJWK(pub *rsa.PublicKey, kid string) entity.JWK {
 
 // SignJWT signs the given access token claims using the provided RSA private key and returns the JWT string.
 func (s *TokenService) SignJWT(ctx context.Context, claims entity.AccessTokenClaims,  privateKey *rsa.PrivateKey,  kid string) (string, error) {
-    logger.InfoOutCtx("signing JWT with provided claims")
+    logger.Info(ctx, "signing JWT with provided claims")
 
     if privateKey == nil {
-        logger.ErrorOutCtx("private key is nil")
+        logger.Error(ctx, "private key is nil")
         return "", errors.New("private key cannot be nil")
     }
 
@@ -79,7 +79,7 @@ func (s *TokenService) SignJWT(ctx context.Context, claims entity.AccessTokenCla
     // 4. Sign the token with RSA private key
     tokenString, err := token.SignedString(privateKey)
     if err != nil {
-        logger.ErrorOutCtx("failed to sign JWT", zap.Error(err))
+        logger.Error(ctx, "failed to sign JWT", zap.Error(err))
         return "", fmt.Errorf("failed to sign JWT: %w", err)
     }
 
@@ -88,10 +88,10 @@ func (s *TokenService) SignJWT(ctx context.Context, claims entity.AccessTokenCla
 
 // VerifyJWT verifies the given JWT string using the provided RSA public key and returns the access token claims if the token is valid.
 func (s *TokenService) VerifyJWT(ctx context.Context, tokenString string, publicKey *rsa.PublicKey) (*entity.AccessTokenClaims, error) {
-    logger.InfoOutCtx("verifying JWT with provided token string")
+    logger.Info(ctx, "verifying JWT with provided token string")
 
     if publicKey == nil {
-        logger.ErrorOutCtx("public key is nil")
+        logger.Error(ctx, "public key is nil")
         return nil, errors.New("public key cannot be nil")
     }
 
@@ -102,13 +102,13 @@ func (s *TokenService) VerifyJWT(ctx context.Context, tokenString string, public
         return publicKey, nil
     })
     if err != nil {
-        logger.ErrorOutCtx("failed to parse JWT", zap.Error(err))
+        logger.Error(ctx, "failed to parse JWT", zap.Error(err))
         return nil, fmt.Errorf("failed to parse JWT: %w", err)
     }
 
     claims, ok := token.Claims.(*entity.TokenCustomClaims)
     if !ok || !token.Valid {
-        logger.ErrorOutCtx("invalid JWT claims")
+        logger.Error(ctx, "invalid JWT claims")
         return nil, errors.New("invalid JWT claims")
     }
 

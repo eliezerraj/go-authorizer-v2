@@ -36,7 +36,7 @@ type ILoginUseCase interface {
 }
 
 func NewLoginUseCase(tokenTTL time.Duration, keyRepository repository.IKeyRepository, tokenService security.ITokenService) ILoginUseCase {
-	logger.InfoOutCtx("initializing login usecase SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing login usecase SUCCESSFULLY")
 	
 	return &LoginUseCase{
 		keyRepository: 	keyRepository,
@@ -59,7 +59,7 @@ func (uc *LoginUseCase) Login(ctx context.Context, login entity.Login) (*entity.
 
     privKey, kid, err := uc.keyRepository.GetActivePrivateKey(ctx)
     if err != nil {
-		logger.ErrorOutCtx("error getting active private key", zap.Any("error", err))
+		logger.Error(ctx, "error getting active private key", zap.Any("error", err))
         return nil, err
     }
 
@@ -82,7 +82,7 @@ func (uc *LoginUseCase) Login(ctx context.Context, login entity.Login) (*entity.
 
 	tokenString, err := uc.tokenService.SignJWT(ctx, claims, privKey, kid)
     if err != nil {
-		logger.ErrorOutCtx("error signing JWT", zap.Any("error", err))
+		logger.Error(ctx, "error signing JWT", zap.Any("error", err))
         return nil, err
     }
 
@@ -105,7 +105,7 @@ func (uc *LoginUseCase) VerifyJWT(ctx context.Context, tokenString string) (*ent
 
 	pubKey, err := uc.keyRepository.GetActivePublicKey(ctx)
 	if err != nil {
-		logger.ErrorOutCtx("error getting active public key", zap.Any("error", err))
+		logger.Error(ctx, "error getting active public key", zap.Any("error", err))
 		return nil, err
 	}
 
@@ -122,7 +122,7 @@ func (uc *LoginUseCase) WellKnownJwksGet(ctx context.Context) (*entity.WellKnown
 
 	jwk, err := uc.keyRepository.GetAllPublicKeys(ctx)
 	if err != nil {
-		logger.ErrorOutCtx("error getting active public key", zap.Any("error", err))
+		logger.Error(ctx, "error getting active public key", zap.Any("error", err))
 		return nil, err
 	}
 	
@@ -141,19 +141,19 @@ func (uc *LoginUseCase) RefreshToken(ctx context.Context, tokenString string) (*
 
 	pubKey, err := uc.keyRepository.GetActivePublicKey(ctx)
 	if err != nil {
-		logger.ErrorOutCtx("error getting active public key", zap.Any("error", err))
+		logger.Error(ctx, "error getting active public key", zap.Any("error", err))
 		return nil, err
 	}
 
 	claims, err := uc.tokenService.VerifyJWT(ctx, tokenString, pubKey)
 	if err != nil {
-		logger.ErrorOutCtx("error verifying JWT", zap.Any("error", err))
+		logger.Error(ctx, "error verifying JWT", zap.Any("error", err))
 		return nil, err
 	}
 
 	privKey, kid, err := uc.keyRepository.GetActivePrivateKey(ctx)
     if err != nil {
-        logger.ErrorOutCtx("error getting active private key", zap.Any("error", err))
+        logger.Error(ctx, "error getting active private key", zap.Any("error", err))
         return nil, err
     }
 	
@@ -165,7 +165,7 @@ func (uc *LoginUseCase) RefreshToken(ctx context.Context, tokenString string) (*
 
 	tokenRefreshed, err := uc.tokenService.SignJWT(ctx, *claims, privKey, kid)
 	if err != nil {
-		logger.ErrorOutCtx("error signing JWT", zap.Any("error", err))
+		logger.Error(ctx, "error signing JWT", zap.Any("error", err))
 		return nil, err
 	}
 	
