@@ -25,7 +25,7 @@ type UseCase struct {
 }
 
 func NewApplication(cfg *config.Config) (*Application, error) {
-	logger.InfoOutCtx("initializing application SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing application SUCCESSFULLY")
 
 	// Initialize database connector
 	readerConfig := connector.ConnectorConfig{
@@ -48,39 +48,39 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 		HealthCheckPeriod: cfg.Database.ConnIdleTime * time.Minute / 2,
 	}
 
-	logger.InfoOutCtx("readerConfig initialized SUCCESSFULLY", zap.Any("readerConfig", readerConfig), zap.Any("writerConfig", writerConfig))
+	logger.Info(context.Background(), "readerConfig initialized SUCCESSFULLY", zap.Any("readerConfig", readerConfig), zap.Any("writerConfig", writerConfig))
 
 	dbConnector, err := connector.NewDatabaseConnector(cfg.App.Name, readerConfig, writerConfig)
 	if err != nil {
-		logger.FatalOutCtx("failed to initialize database connector")
+		logger.Fatal(context.Background(), "failed to initialize database connector")
 		return nil, err
 	}
 	
-	logger.InfoOutCtx("dbConnector initialized SUCCESSFULLY", zap.Any("dbConnector", dbConnector))
+	logger.Info(context.Background(), "dbConnector initialized SUCCESSFULLY", zap.Any("dbConnector", dbConnector))
 	
 	pgConnection := &connector.PgConnection{}
 	_, err = pgConnection.NewPool(context.Background(), readerConfig)
 	if err != nil {
-		logger.FatalOutCtx("failed to create database pool")
+		logger.Fatal(context.Background(), "failed to create database pool")
 		return nil, err
 	}
 	err = pgConnection.Ping(context.Background())
 	if err != nil {
-		logger.FatalOutCtx("failed to ping pg connection")
+		logger.Fatal(context.Background(), "failed to ping pg connection")
 		return nil, err
 	}
 	
 	// Authorizer Repository initialization (where the RSA keys are loaded and managed)
 	rsaKeyRepository, err := repository.NewKeyRepository(cfg.RSAKeys.PrivateKeyPath, cfg.RSAKeys.PublicKeyPath, cfg.RSAKeys.KID)
 	if err != nil {
-		logger.FatalOutCtx("failed to initialize key repository")
+		logger.Fatal(context.Background(), "failed to initialize key repository")
 		return nil, err
 	}
 
 	// ES256 Key Repository initialization
 	ec256KeyRepository, err := repository.NewEC256KeyRepository(cfg.EC256Keys.PublicKeyPath, cfg.EC256Keys.KID)
 	if err != nil {
-		logger.FatalOutCtx("failed to initialize EC256 key repository")
+		logger.Fatal(context.Background(), "failed to initialize EC256 key repository")
 		return nil, err
 	}
 

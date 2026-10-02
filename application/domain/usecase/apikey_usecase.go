@@ -22,7 +22,7 @@ type IApiKeyUseCase interface {
 }
 
 func NewApiKeyUseCase(ies256KeyRepository repository.IES256KeyRepository) *ApiKeyUseCase {
-	logger.InfoOutCtx("Creating new API key use case instance SUCCESSFULLY")
+	logger.Info(context.Background(), "Creating new API key use case instance SUCCESSFULLY")
 
 	return &ApiKeyUseCase{
 		ies256KeyRepository: ies256KeyRepository,
@@ -30,16 +30,16 @@ func NewApiKeyUseCase(ies256KeyRepository repository.IES256KeyRepository) *ApiKe
 }
 
 func (uc *ApiKeyUseCase) VerifyJwtES256(ctx context.Context, tokenString string) (*entity.AccessTokenClaims, error) {
-	logger.InfoOutCtx("Verifying JWT with ES256", zap.String("token", tokenString))
+	logger.Info(context.Background(), "Verifying JWT with ES256", zap.String("token", tokenString))
 
 	if tokenString == "" {
-		logger.ErrorOutCtx("Token string is empty")
+		logger.Error(context.Background(), "Token string is empty")
 		return nil, fmt.Errorf("token string is empty")
 	}
 
 	publicKey, err := uc.ies256KeyRepository.GetActivePublicKey(ctx)
 	if err != nil {
-		logger.ErrorOutCtx("Failed to retrieve public key: %v", zap.Error(err))
+		logger.Error(context.Background(), "Failed to retrieve public key", zap.Error(err))
 		return nil, err
 	}
 
@@ -51,18 +51,18 @@ func (uc *ApiKeyUseCase) VerifyJwtES256(ctx context.Context, tokenString string)
 	})
 
 	if err != nil {
-		logger.ErrorOutCtx("Failed to parse token: %v", zap.Error(err))
+		logger.Error(context.Background(), "Failed to parse token", zap.Error(err))
 		return nil, err
 	}
 
 	if !token.Valid {
-		logger.ErrorOutCtx("Token is invalid")
+		logger.Error(context.Background(), "Token is invalid")
 		return nil, fmt.Errorf("token is invalid")
 	}
 
 	claims, ok := token.Claims.(*entity.TokenCustomClaims)
 	if !ok {
-		logger.ErrorOutCtx("Failed to cast token claims")
+		logger.Error(context.Background(), "Failed to cast token claims")
 		return nil, fmt.Errorf("failed to cast token claims")
 	}
 
