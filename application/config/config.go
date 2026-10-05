@@ -90,7 +90,6 @@ type EC256Keys struct {
 
 type OtelEnv struct {
 	OtelExportEndpoint			string	`env:"OTEL_EXPORTER_OTLP_ENDPOINT" envDefault:"127.0.0.1:4317"`
-	UseStdoutTracerExporter		bool	`env:"OTEL_STDOUT_TRACER" envDefault:"false"`
 	UseOtlpCollector			bool	`env:"OTEL_COLLECTOR" envDefault:"true"`
 	OtelMetricsPort				string	`env:"OTEL_METRICS_PORT" envDefault:"9000"`
 }

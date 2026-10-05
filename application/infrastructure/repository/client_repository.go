@@ -53,7 +53,7 @@ func (r *ClientRepository) ClientGet(ctx context.Context, client entity.Client) 
 		if err != nil {
 			span.RecordError(err) 
 			span.SetStatus(codes.Error, err.Error())
-			logger.Error(ctx, "client repository ClientGet failed", zap.Error(err))
+			logger.Debug(ctx, "client repository ClientGet failed", zap.Error(err))
 		}
         histogram.Record(ctx, time.Since(start).Seconds(), metric.WithAttributes(
             attribute.String("operation", "ClientGet"),
