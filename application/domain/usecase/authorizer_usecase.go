@@ -19,7 +19,7 @@ import (
 
 const (
 	DefaultIssuer   = "go-authorizer-v2"
-	DefaultAudience = "aud-teste"
+	DefaultAudience = "go-ecommerce"
 )
 
 type LoginUseCase struct {
@@ -63,7 +63,7 @@ func (uc *LoginUseCase) Login(ctx context.Context, login entity.Login) (*entity.
         return nil, err
     }
 
-	var scope = "teste:read"
+	var scope = "inventory:read,inventory:write,inventory:update,order:read,order:write,order:update,checkout:read,checkout:write,checkout:update"
 	var issuer = DefaultIssuer
 	var audience []string = []string{DefaultAudience}
 
