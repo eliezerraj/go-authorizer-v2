@@ -63,7 +63,7 @@ func (uc *LoginUseCase) Login(ctx context.Context, login entity.Login) (*entity.
         return nil, err
     }
 
-	var scope = "inventory:read,inventory:write,inventory:update,order:read,order:write,order:update,checkout:read,checkout:write,checkout:update"
+	var scope = "inventory:read inventory:create inventory:update order:read order:create order:history checkout:read checkout:create statistics:compute inventory_a2a:monitor inventory_a2a:manage"
 	var issuer = DefaultIssuer
 	var audience []string = []string{DefaultAudience}
 

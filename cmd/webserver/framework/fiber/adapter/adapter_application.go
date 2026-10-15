@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type ApplicationAdapter struct {
@@ -61,6 +62,9 @@ func (a *ApplicationAdapter) Login(ctxFiber fiber.Ctx) error {
 			"failed to parse request body",
 			err.Error(),
 			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", fiber.StatusBadRequest),
+		)
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 	
@@ -74,9 +78,15 @@ func (a *ApplicationAdapter) Login(ctxFiber fiber.Ctx) error {
 			"failed to login",
 			err.Error(),
 			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", fiber.StatusUnauthorized),
+		)
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
+	span.SetAttributes(
+			attribute.Int("http.response.status_code", fiber.StatusOK),
+	)
 	return ctxFiber.Status(fiber.StatusOK).JSON(accessToken)
 }
 
@@ -110,6 +120,9 @@ func (a *ApplicationAdapter) VerifyJWT(ctxFiber fiber.Ctx) error {
 			"failed to parse request body",
 			err.Error(),
 			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", fiber.StatusBadRequest),
+		)
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
@@ -123,6 +136,9 @@ func (a *ApplicationAdapter) VerifyJWT(ctxFiber fiber.Ctx) error {
 			"failed to verify JWT",
 			err.Error(),
 			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", fiber.StatusUnauthorized),
+		)
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
@@ -131,6 +147,9 @@ func (a *ApplicationAdapter) VerifyJWT(ctxFiber fiber.Ctx) error {
 		Claims:   claims,
 	}
 
+	span.SetAttributes(
+			attribute.Int("http.response.status_code", fiber.StatusOK),
+	)
 	return ctxFiber.Status(fiber.StatusOK).JSON(resp)
 }
 
@@ -163,9 +182,14 @@ func (a *ApplicationAdapter) WellKnownJwksGet(ctxFiber fiber.Ctx) error {
 			"failed to get JWKS",
 			err.Error(),
 			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", fiber.StatusInternalServerError),
+		)
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
-
+	span.SetAttributes(
+			attribute.Int("http.response.status_code", fiber.StatusOK),
+	)
 	return ctxFiber.Status(fiber.StatusOK).JSON(jwks)
 }
 
@@ -198,6 +222,9 @@ func (a *ApplicationAdapter) RefreshToken(ctxFiber fiber.Ctx) error {
 			"failed to parse request body",
 			err.Error(),
 			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", fiber.StatusBadRequest),
+		)
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
@@ -212,9 +239,14 @@ func (a *ApplicationAdapter) RefreshToken(ctxFiber fiber.Ctx) error {
 			"failed to refresh token",
 			err.Error(),
 			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", fiber.StatusInternalServerError),
+		)
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
-
+	span.SetAttributes(
+			attribute.Int("http.response.status_code", fiber.StatusOK),
+	)
 	return ctxFiber.Status(fiber.StatusOK).JSON(tokenRefreshed)
 }
 
@@ -249,6 +281,9 @@ func (a *ApplicationAdapter) VerifyES256JWT(ctxFiber fiber.Ctx) error {
 			"failed to parse request body",
 			err.Error(),
 			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", fiber.StatusBadRequest),
+		)
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
@@ -263,8 +298,13 @@ func (a *ApplicationAdapter) VerifyES256JWT(ctxFiber fiber.Ctx) error {
 			"failed to verify ES256 JWT",
 			err.Error(),
 			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", fiber.StatusInternalServerError),
+		)
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
-
+	span.SetAttributes(
+			attribute.Int("http.response.status_code", fiber.StatusOK),
+	)
 	return ctxFiber.Status(fiber.StatusOK).JSON(claims)
 }
