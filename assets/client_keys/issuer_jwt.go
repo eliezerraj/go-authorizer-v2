@@ -33,11 +33,11 @@ func main() {
     }
 
     claims := CustomClaims{
-		UserID: "roadcard",
+		UserID: "teste",
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "roadcard-service-pix-out",
-			Subject:   "roadcard",
-			Audience:  jwt.ClaimStrings{"https://roadcard.com.br"},
+			Issuer:    "teste-service-pix-out",
+			Subject:   "teste",
+			Audience:  jwt.ClaimStrings{"https://teste.com.br"},
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
