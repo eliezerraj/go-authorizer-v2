@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/zap"
 
@@ -18,12 +19,12 @@ import (
 
 type AuthorizerController struct {
 	schema validator.Schema
-	loginUseCase usecase.ILoginUseCase
+	authUseCase usecase.IAuthUseCase
 	apiKeyUseCase usecase.IApiKeyUseCase
 }
 
 // NewAuthorizerController creates a new instance of AuthorizerController with the provided login use case.
-func NewAuthorizerController(loginUseCase usecase.ILoginUseCase, apiKeyUseCase usecase.IApiKeyUseCase) *AuthorizerController {
+func NewAuthorizerController(authUseCase usecase.IAuthUseCase, apiKeyUseCase usecase.IApiKeyUseCase) *AuthorizerController {
 	logger.Info(context.Background(), "initializing authorizer controller SUCCESSFULLY")
 
 	schema := validator.Schema{
@@ -34,7 +35,7 @@ func NewAuthorizerController(loginUseCase usecase.ILoginUseCase, apiKeyUseCase u
 
 	return &AuthorizerController{
 		schema:       schema,
-		loginUseCase: loginUseCase,
+		authUseCase: authUseCase,
 		apiKeyUseCase: apiKeyUseCase,
 	}
 }
@@ -43,7 +44,7 @@ func (p *AuthorizerController) Login(ctx context.Context, req external.LoginRequ
 	logger.Info(ctx, "authorizer controller Login called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "authorizerController.login", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.login", trace.SpanKindInternal)
 	defer span.End()
 
 	login := entity.Login{
@@ -52,7 +53,7 @@ func (p *AuthorizerController) Login(ctx context.Context, req external.LoginRequ
 	}
 
 	// Call the use case to perform login
-	res, err := p.loginUseCase.Login(ctx, login)
+	res, err := p.authUseCase.Login(ctx, login)
 	if err != nil {
 		logger.Error(ctx, "authorizer controller Login failed", zap.Error(err))
 		return nil, err
@@ -62,41 +63,78 @@ func (p *AuthorizerController) Login(ctx context.Context, req external.LoginRequ
 }
 
 func (p *AuthorizerController) VerifyJWT(ctx context.Context, req external.VerifyJWTRequest) (*entity.AccessTokenClaims, error) {
-	logger.Info(ctx, "authorizer controller VerifyJWT called")
+	logger.Info(ctx, "VerifyJWT called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "authorizerController.verifyJWT", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.verifyJWT", trace.SpanKindInternal)
 	defer span.End()
 
-	return p.loginUseCase.VerifyJWT(ctx, req.Token)
+	return p.authUseCase.VerifyJWT(ctx, req.Token)
 }
 
 func (p *AuthorizerController) WellKnownJwksGet(ctx context.Context) (*entity.WellKnownJwks, error) {
-	logger.Info(ctx, "authorizer controller WellKnownJwks called")
+	logger.Info(ctx, "WellKnownJwks called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "authorizerController.WellKnownJwksGet", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.wellKnownJwksGet", trace.SpanKindInternal)
 	defer span.End()
 
-	return p.loginUseCase.WellKnownJwksGet(ctx)
+	return p.authUseCase.WellKnownJwksGet(ctx)
 }
 
 func (p *AuthorizerController) RefreshToken(ctx context.Context, req external.VerifyJWTRequest) (*entity.OAuthToken, error) {
-	logger.Info(ctx, "authorizer controller RefreshToken called")
+	logger.Info(ctx, "RefreshToken called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "authorizerController.refreshToken", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.refreshToken", trace.SpanKindInternal)
 	defer span.End()
 
-	return p.loginUseCase.RefreshToken(ctx, req.Token)
+	return p.authUseCase.RefreshToken(ctx, req.Token)
 }
 
 func (p *AuthorizerController) VerifyES256JWT(ctx context.Context, req external.VerifyJWTRequest) (*entity.AccessTokenClaims, error) {
-	logger.Info(ctx, "authorizer controller VerifyES256JWT called")
+	logger.Info(ctx, "VerifyES256JWT called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "authorizerController.verifyES256JWT", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.verifyES256JWT", trace.SpanKindInternal)
 	defer span.End()
 
 	return p.apiKeyUseCase.VerifyJwtES256(ctx, req.Token)
+}
+
+// GrantType handles different OAuth2 grant types based on the request.
+func (p *AuthorizerController) GrantType(ctx context.Context, req external.AuthTokenRequest) (*entity.OAuthToken, error) {
+	logger.Info(ctx, "GrantType called")
+
+	// Tracing and metrics
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.grantType:"+req.GrantType, trace.SpanKindInternal)
+	defer span.End()
+
+	clientCredential := entity.ClientCredential{
+		ClientID:  req.ClientID,
+		SecretID:  req.SecretID,
+		Resource:  req.Resource,
+		GrantType: req.GrantType,
+	}
+
+	switch req.GrantType {
+	case "urn:ietf:params:oauth:grant-type:token-exchange":
+		//handleTokenExchange()
+
+	case "authorization_code":
+		//handleAuthorizationCode()
+
+	case "client_credentials":
+
+		res, err := p.authUseCase.ClientCredentials(ctx, clientCredential)
+		if err != nil {
+			logger.Error(ctx, "authorizer controller ClientCredentials failed", zap.Error(err))
+			return nil, err
+		}
+		return res, nil
+	default:
+		return nil, errors.New("unsupported grant_type")
+	}
+
+	return nil, nil
 }

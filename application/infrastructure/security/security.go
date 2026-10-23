@@ -56,6 +56,7 @@ func (s *TokenService) SignJWT(ctx context.Context, claims entity.AccessTokenCla
     jwtClaims := entity.TokenCustomClaims{
         ClientID: claims.ClientID,
         Scope:    claims.Scope,
+        Role:     claims.Role,
         Cnf:      claims.Cnf,
         RegisteredClaims: jwt.RegisteredClaims{
             Issuer:    claims.Issuer,
@@ -118,6 +119,7 @@ func (s *TokenService) VerifyJWT(ctx context.Context, tokenString string, public
         ClientID:  claims.ClientID,
         Audience:  claims.Audience,
         Scope:     claims.Scope,
+        Role:      claims.Role,
         IssuedAt:  claims.IssuedAt.Time,
         NotBefore: claims.NotBefore.Time,
         ExpiresAt: claims.ExpiresAt.Time,

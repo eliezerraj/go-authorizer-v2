@@ -2,6 +2,9 @@ package adapter
 
 import (
 	"context"
+	"encoding/base64"
+	"strings"
+
 	"go.uber.org/zap"
 
 	"github.com/go-authorizer-v2/application/config"
@@ -23,6 +26,19 @@ type ApplicationAdapter struct {
 	application *application.Application
 }
 
+func parseBasicAuth(header string) (string, string, bool) {
+	const prefix = "basic "
+	if len(header) < len(prefix) || !strings.EqualFold(header[:len(prefix)], prefix) {
+		return "", "", false
+	}
+	decoded, err := base64.StdEncoding.DecodeString(header[len(prefix):])
+	if err != nil {
+		return "", "", false
+	}
+	clientID, secret, found := strings.Cut(string(decoded), ":")
+	return clientID, secret, found
+}
+
 func NewApplicationAdapter(cfg *config.Config, application *application.Application) *ApplicationAdapter {
 	logger.Info(context.Background(), "initializing application adapter SUCCESSFULLY")
 
@@ -39,7 +55,7 @@ func (a *ApplicationAdapter) Login(ctxFiber fiber.Ctx) error {
 	defer cancel()
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.login", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.login", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -97,7 +113,7 @@ func (a *ApplicationAdapter) VerifyJWT(ctxFiber fiber.Ctx) error {
 	defer cancel()
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.verifyJWT", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.verifyJWT", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -160,7 +176,7 @@ func (a *ApplicationAdapter) WellKnownJwksGet(ctxFiber fiber.Ctx) error {
 	defer cancel()
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.wellKnownJwksGet", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.wellKnownJwksGet", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -200,7 +216,7 @@ func (a *ApplicationAdapter) RefreshToken(ctxFiber fiber.Ctx) error {
 	defer cancel()
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.refreshToken", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.refreshToken", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -258,7 +274,7 @@ func (a *ApplicationAdapter) VerifyES256JWT(ctxFiber fiber.Ctx) error {
 	defer cancel()
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.verifyES256JWT", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.verifyES256JWT", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -307,4 +323,69 @@ func (a *ApplicationAdapter) VerifyES256JWT(ctxFiber fiber.Ctx) error {
 			attribute.Int("http.response.status_code", fiber.StatusOK),
 	)
 	return ctxFiber.Status(fiber.StatusOK).JSON(claims)
+}
+
+// AuthToken handles the /auth/token endpoint for obtaining an authentication token.
+func (a *ApplicationAdapter) AuthToken(ctxFiber fiber.Ctx) error {
+	logger.Info(ctxFiber.Context(), "AuthToken called")
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
+	defer cancel()
+
+	// Tracing and metrics
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.authToken", trace.SpanKindInternal)
+	defer span.End()
+
+	logger.Info(
+		ctx,
+		a.cfg.App.Name,
+		zap.ByteString("headers", utils.FormatHeadersAsJSON(ctxFiber.GetReqHeaders())),
+		zap.String("host", ctxFiber.Hostname()),
+		zap.String("path", ctxFiber.Path()),
+		zap.ByteString("query", ctxFiber.Request().URI().QueryString()),
+		zap.ByteString("body", ctxFiber.Body()),
+	)
+
+	authTokenReq := external.AuthTokenRequest{}
+	if err := ctxFiber.Bind().Form(&authTokenReq); err != nil {
+		logger.Error(ctx, "failed to parse request body", zap.Error(err))
+		errorResponse := external.NewResponseError(ctx,
+			fiber.StatusBadRequest,
+			fiber.ErrBadRequest,
+			fiber.ErrBadRequest.Message,
+			"failed to parse request body",
+			err.Error(),
+			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", fiber.StatusBadRequest),
+		)
+		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
+	}
+
+	// Client credentials come from the Basic Authorization header (RFC 6749 2.3.1)
+	if clientID, secret, ok := parseBasicAuth(ctxFiber.Get(fiber.HeaderAuthorization)); ok {
+		authTokenReq.ClientID = clientID
+		authTokenReq.SecretID = secret
+	}
+
+	// Pass the parsed request to the controller
+	token, err := a.application.AuthorizerController.GrantType(ctx, authTokenReq)
+	if err != nil {
+		logger.Error(ctx, "failed to get auth token", zap.Error(err))
+		errorResponse := external.NewResponseError(ctx,
+			fiber.StatusInternalServerError,
+			fiber.ErrInternalServerError,
+			fiber.ErrInternalServerError.Message,
+			"failed to get auth token",
+			err.Error(),
+			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", fiber.StatusInternalServerError),
+		)
+		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
+	}
+	span.SetAttributes(
+			attribute.Int("http.response.status_code", fiber.StatusOK),
+	)
+	return ctxFiber.Status(fiber.StatusOK).JSON(token)
 }
