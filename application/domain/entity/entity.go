@@ -6,6 +6,15 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type ClientCredential struct {
+	ClientID            string `json:"client_id,omitempty"`
+	SecretID            string `json:"secret_id,omitempty"`
+    Resource            string `json:"resource,omitempty"`
+    GrantType           string `json:"grant_type,omitempty"`
+    ClientAssertion     string `json:"client_assertion,omitempty"`
+    ClientAssertionType string `json:"client_assertion_type,omitempty"`
+}
+
 type Login struct {
 	ClientID string `json:"client_id,omitempty"`
 	SecretID string `json:"secret_id,omitempty"`
@@ -20,6 +29,7 @@ type Client struct {
 type TokenCustomClaims struct {
     ClientID string         `json:"client_id,omitempty"`
     Scope    string        `json:"scope,omitempty"`
+    Role     string        `json:"role,omitempty"`
     Cnf      *Confirmation `json:"cnf,omitempty"`
     jwt.RegisteredClaims
 }
@@ -34,6 +44,7 @@ type AccessTokenClaims struct {
     JWTID     string        `json:"jti"`
     ClientID  string        `json:"client_id,omitempty"`
     Scope     string        `json:"scope,omitempty"`
+    Role      string        `json:"role,omitempty"`
     Cnf       *Confirmation `json:"cnf,omitempty"` // For DPoP thumbprint (jkt)
 }
 
@@ -60,6 +71,7 @@ type OAuthToken struct {
     ExpiresIn    int    `json:"expires_in,omitempty"`
     RefreshToken string `json:"refresh_token,omitempty"`
     Scope        string `json:"scope,omitempty"`
+    Role         string `json:"role,omitempty"`
 }
 
 // ------

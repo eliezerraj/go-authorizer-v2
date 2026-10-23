@@ -21,7 +21,7 @@ type Application struct {
 }
 
 type UseCase struct {
-	LoginUseCase usecase.ILoginUseCase
+	AuthUseCase usecase.IAuthUseCase
 }
 
 func NewApplication(cfg *config.Config) (*Application, error) {
@@ -88,7 +88,7 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 	tokenService := security.NewTokenService()
 
 	// UseCase initialization RSA and ES256
-	loginUsecase := usecase.NewLoginUseCase(cfg.TokenConfig.TokenTTL, rsaKeyRepository, tokenService)
+	loginUsecase := usecase.NewAuthUseCase(cfg.TokenConfig.TokenTTL, rsaKeyRepository, tokenService, cfg.App.Name)
 	apiKeyUsecase := usecase.NewApiKeyUseCase(ec256KeyRepository)
 
 	// Controller initialization

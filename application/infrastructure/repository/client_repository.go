@@ -37,7 +37,7 @@ func (r *ClientRepository) ClientGet(ctx context.Context, client entity.Client) 
 	logger.Info(ctx, "client repository ClientGet called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "clientRepository.ClientGet", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "repository.clientGet", trace.SpanKindInternal)
 	defer span.End()
 
 	meter := otel.Meter("go-authorizer-v2.repository")
