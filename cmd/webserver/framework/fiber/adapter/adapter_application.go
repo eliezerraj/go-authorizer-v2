@@ -366,6 +366,7 @@ func (a *ApplicationAdapter) AuthToken(ctxFiber fiber.Ctx) error {
 	if clientID, secret, ok := parseBasicAuth(ctxFiber.Get(fiber.HeaderAuthorization)); ok {
 		authTokenReq.ClientID = clientID
 		authTokenReq.SecretID = secret
+		authTokenReq.IsBasicAuth = true
 	}
 
 	// Pass the parsed request to the controller

@@ -1,18 +1,25 @@
 package usecase
 
 import (
-	"time"
 	"context"
-	
-	"github.com/google/uuid"
-	
-	"go.uber.org/zap"
-	"github.com/eliezerraj/go-core/v3/logger"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"encoding/base64"
+	"fmt"
+	"math/big"
+	"net/url"
+	"time"
 
+	"github.com/eliezerraj/go-core/v3/logger"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
+
+	"github.com/go-authorizer-v2/application/domain/entity"
+	"github.com/go-authorizer-v2/application/infrastructure/module"
+	"github.com/go-authorizer-v2/application/infrastructure/repository"
+	"github.com/go-authorizer-v2/application/infrastructure/security"
 	"github.com/go-authorizer-v2/application/tracing"
-    "github.com/go-authorizer-v2/application/domain/entity"
-    "github.com/go-authorizer-v2/application/infrastructure/repository"
-    "github.com/go-authorizer-v2/application/infrastructure/security"
 
 	"go.opentelemetry.io/otel/trace"
 )
@@ -22,6 +29,7 @@ type AuthUseCase struct {
     tokenService 	security.ITokenService	
 	tokenTTL     	time.Duration
 	issuer      	string
+	authModule 		module.AuthModule
 }
 
 type IAuthUseCase interface {
@@ -31,9 +39,10 @@ type IAuthUseCase interface {
 	RefreshToken(ctx context.Context, tokenString string) (*entity.OAuthToken, error)
 
 	ClientCredentials(ctx context.Context, req entity.ClientCredential) (*entity.OAuthToken, error)
+	PrivateKeyJwt(ctx context.Context, req entity.ClientCredential) (*entity.OAuthToken, error)
 }
 
-func NewAuthUseCase(tokenTTL time.Duration, keyRepository repository.IKeyRepository, tokenService security.ITokenService, issuer string) IAuthUseCase {
+func NewAuthUseCase(tokenTTL time.Duration, keyRepository repository.IKeyRepository, tokenService security.ITokenService, issuer string, authModule module.AuthModule) IAuthUseCase {
 	logger.Info(context.Background(), "initializing auth usecase SUCCESSFULLY")
 	
 	return &AuthUseCase{
@@ -41,6 +50,7 @@ func NewAuthUseCase(tokenTTL time.Duration, keyRepository repository.IKeyReposit
 		tokenService: 	tokenService,
 		tokenTTL: tokenTTL,
 		issuer:   issuer,
+		authModule: authModule,
 	}
 }
 
@@ -228,6 +238,93 @@ func (uc *AuthUseCase) PrivateKeyJwt(ctx context.Context, clientCredential entit
 	ctx, span := tracing.CustomStartSpanCtx(ctx, "usecase.privateKeyJwt", trace.SpanKindInternal)
 	defer span.End()
 
+	// Extract the client assertion from the request if needed.
+	clientAssertion := clientCredential.ClientAssertion
+	if clientAssertion == "" {
+		logger.Error(ctx, "client assertion is missing")
+		return nil, fmt.Errorf("client assertion is missing")
+	}
+
+	unverifiedClaims := &jwt.RegisteredClaims{}
+	unverifiedToken, _, err := new(jwt.Parser).ParseUnverified(clientAssertion, unverifiedClaims)
+	if err != nil {
+		logger.Error(ctx, "failed to parse client assertion", zap.Error(err))
+		return nil, fmt.Errorf("invalid client assertion: %w", err)
+	}
+
+	kid, ok := unverifiedToken.Header["kid"].(string)
+	if !ok || kid == "" {
+		return nil, fmt.Errorf("client assertion has an invalid kid")
+	}
+
+	metadataURL, err := validateMetadataURL(unverifiedClaims.Issuer)
+	if err != nil {
+		return nil, fmt.Errorf("invalid client metadata URL: %w", err)
+	}
+
+	// Retrieve client metadata from the provided metadata URL.
+	metadata, err := uc.authModule.GetClientMetadata(ctx, metadataURL)
+	if err != nil {
+		logger.Error(ctx, "failed to retrieve client metadata", zap.Error(err))
+		return nil, err
+	}
+
+	// Check ClientID vs client assertion issuer.
+	if metadata.ClientID != unverifiedClaims.Issuer {
+		return nil, fmt.Errorf("client metadata client_id does not match client assertion issuer")
+	}
+
+	jwksURL, err := validateMetadataURL(metadata.JWKSURI)
+	if err != nil {
+		return nil, fmt.Errorf("invalid client JWKS URL: %w", err)
+	}
+
+	// POST request to retrieve JWKS from the client's JWKS URL.
+	resJWKS, err := uc.authModule.GetJwks(ctx, jwksURL)
+	if err != nil {
+		logger.Error(ctx, "failed to retrieve client JWKS", zap.Error(err))
+		return nil, err
+	}
+
+	// Get the KEYS from the JWKS response and find the matching signing key for the client assertion.
+	var signingKey *ecdsa.PublicKey
+	for _, jwk := range resJWKS.Keys {
+		if jwk.KeyID != kid || jwk.KeyType != "EC" || jwk.Crv != "P-256" || jwk.Algorithm != "ES256" || (jwk.Use != "" && jwk.Use != "sig") {
+			continue
+		}
+
+		xBytes, xErr := base64.RawURLEncoding.DecodeString(jwk.X)
+		yBytes, yErr := base64.RawURLEncoding.DecodeString(jwk.Y)
+		if xErr != nil || yErr != nil || len(xBytes) != 32 || len(yBytes) != 32 {
+			return nil, fmt.Errorf("client JWKS contains invalid EC coordinates for kid %q", kid)
+		}
+		x, y := new(big.Int).SetBytes(xBytes), new(big.Int).SetBytes(yBytes)
+		if !elliptic.P256().IsOnCurve(x, y) {
+			return nil, fmt.Errorf("client JWKS contains invalid P-256 public key for kid %q", kid)
+		}
+		signingKey = &ecdsa.PublicKey{Curve: elliptic.P256(), X: x, Y: y}
+		break
+	}
+	if signingKey == nil {
+		return nil, fmt.Errorf("no matching ES256 signing key found for kid %q", kid)
+	}
+
+	verifiedClaims := &jwt.RegisteredClaims{}
+	verifiedToken, err := jwt.ParseWithClaims(clientAssertion, verifiedClaims, func(token *jwt.Token) (interface{}, error) {
+		if token.Method != jwt.SigningMethodES256 || token.Header["kid"] != kid {
+			return nil, fmt.Errorf("unexpected client assertion signing method or kid")
+		}
+		return signingKey, nil
+	}, jwt.WithIssuedAt())
+	if err != nil {
+		logger.Error(ctx, "failed to verify client assertion", zap.Error(err))
+		return nil, fmt.Errorf("invalid client assertion: %w", err)
+	}
+	if !verifiedToken.Valid {
+		return nil, fmt.Errorf("invalid client assertion")
+	}
+
+	// Issue a new access token using the verified client assertion and the active private key.
     privKey, kid, err := uc.keyRepository.GetActivePrivateKey(ctx)
     if err != nil {
 		logger.Error(ctx, "error getting active private key", zap.Any("error", err))
@@ -240,8 +337,8 @@ func (uc *AuthUseCase) PrivateKeyJwt(ctx context.Context, clientCredential entit
 	now := time.Now()
     claims := entity.AccessTokenClaims{
         Issuer:    uc.issuer,
-        Subject:   clientCredential.ClientID,
-        ClientID:  clientCredential.ClientID,
+        Subject:   verifiedClaims.Issuer,
+        ClientID:  verifiedClaims.Issuer,
         Audience:  []string{clientCredential.Resource},
         Scope:     scope,
         Role:      role,
@@ -265,4 +362,15 @@ func (uc *AuthUseCase) PrivateKeyJwt(ctx context.Context, clientCredential entit
 		Scope:        scope,
 		Role:        role,
 	}, nil
+}
+
+func validateMetadataURL(rawURL string) (string, error) {
+	parsedURL, err := url.ParseRequestURI(rawURL)
+	if err != nil {
+		return "", err
+	}
+	if (parsedURL.Scheme != "http" && parsedURL.Scheme != "https") || parsedURL.Host == "" || parsedURL.User != nil || parsedURL.Fragment != "" {
+		return "", fmt.Errorf("URL must be an absolute HTTP(S) URL without user info or fragment")
+	}
+	return parsedURL.String(), nil
 }

@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/eliezerraj/go-core/v3/logger"
+	"github.com/eliezerraj/go-core/v3/httpclient"
 	"github.com/eliezerraj/go-core/v3/database/connector"
 
 	"github.com/go-authorizer-v2/application/infrastructure/security"
@@ -14,6 +15,7 @@ import (
 	"github.com/go-authorizer-v2/application/config"
 	"github.com/go-authorizer-v2/application/controller"
 	"github.com/go-authorizer-v2/application/domain/usecase"
+	"github.com/go-authorizer-v2/application/infrastructure/module"
 )
 
 type Application struct {
@@ -70,6 +72,19 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 		return nil, err
 	}
 	
+	// Create the forwards modules.
+	httpConfig := &httpclient.HttpConfig{
+		Timeout:             cfg.HTTP.Timeout * time.Second,
+		KeepAlive:           cfg.HTTP.KeepAlive * time.Second,
+		IdleConnTimeout:     cfg.HTTP.IdleConnTimeout * time.Second,
+		MaxIdleConns:        cfg.HTTP.MaxIdleConns,
+		MaxIdleConnsPerHost: cfg.HTTP.MaxIdleConnsPerHost,
+		MaxConnsPerHost:     cfg.HTTP.MaxConnsPerHost,
+		ServiceName:         cfg.App.Name,
+	}
+	authHttpClient := httpclient.NewHttpClient(httpConfig)
+	authModule := module.NewAuthModule(authHttpClient)
+
 	// Authorizer Repository initialization (where the RSA keys are loaded and managed)
 	rsaKeyRepository, err := repository.NewKeyRepository(cfg.RSAKeys.PrivateKeyPath, cfg.RSAKeys.PublicKeyPath, cfg.RSAKeys.KID)
 	if err != nil {
@@ -88,11 +103,11 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 	tokenService := security.NewTokenService()
 
 	// UseCase initialization RSA and ES256
-	loginUsecase := usecase.NewAuthUseCase(cfg.TokenConfig.TokenTTL, rsaKeyRepository, tokenService, cfg.App.Name)
+	authUsecase := usecase.NewAuthUseCase(cfg.TokenConfig.TokenTTL, rsaKeyRepository, tokenService, cfg.App.Name, authModule)
 	apiKeyUsecase := usecase.NewApiKeyUseCase(ec256KeyRepository)
 
 	// Controller initialization
-	authorizerController := controller.NewAuthorizerController(loginUsecase, apiKeyUsecase)
+	authorizerController := controller.NewAuthorizerController(authUsecase, apiKeyUsecase)
 
 	return &Application{
 		AuthorizerController: authorizerController,

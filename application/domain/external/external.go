@@ -15,10 +15,11 @@ type VerifyJWTResponse struct {
 }
 
 type AuthTokenRequest struct {
-	ClientID string `json:"client_id" form:"client_id" validate:"required"`
-	SecretID string `json:"secret_id" form:"secret_id"`
-	Resource string `json:"resource" form:"resource" validate:"required"`
-	GrantType string `json:"grant_type" form:"grant_type" validate:"required"` // TokenExchange, ClientCredentials, AuthorizationCode.
+	IsBasicAuth bool `json:"is_basic_auth"`
+	ClientID 	string `json:"client_id" form:"client_id" validate:"required"`
+	SecretID 	string `json:"secret_id" form:"secret_id"`
+	Resource 	string `json:"resource" form:"resource" validate:"required"`
+	GrantType 	string `json:"grant_type" form:"grant_type" validate:"required"` // TokenExchange, ClientCredentials, AuthorizationCode.
 	ClientAssertion     string `json:"client_assertion" form:"client_assertion"`
 	ClientAssertionType string `json:"client_assertion_type" form:"client_assertion_type"`
 }
