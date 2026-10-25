@@ -270,6 +270,7 @@ func (uc *AuthUseCase) PrivateKeyJwt(ctx context.Context, clientCredential entit
 	}
 
 	// Check ClientID vs client assertion issuer.
+	fmt.Printf("======================Validating Client metadata: %+v Issuer: %s\n", metadata.ClientID , unverifiedClaims.Issuer)
 	if metadata.ClientID != unverifiedClaims.Issuer {
 		return nil, fmt.Errorf("client metadata client_id does not match client assertion issuer")
 	}
