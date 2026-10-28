@@ -198,8 +198,7 @@ func (uc *AuthUseCase) ClientCredentials(ctx context.Context, clientCredential e
     }
 
 	var scope = ""
-	var role = "order-admin-role order-all-role order-resource-role order-tool-role"
-
+	var role = "order-admin-role order-all-role order-resource-role order-tool-role inventory-admin-role inventory-all-role inventory-resource-role inventory-tool-role statistic-admin-role statistic-all-role statistic-compute-role inventory-a2a-skill-role"
 	now := time.Now()
     claims := entity.AccessTokenClaims{
         Issuer:    uc.issuer,
@@ -270,7 +269,7 @@ func (uc *AuthUseCase) PrivateKeyJwt(ctx context.Context, clientCredential entit
 	}
 
 	// Check ClientID vs client assertion issuer.
-	fmt.Printf("======================Validating Client metadata: %+v Issuer: %s\n", metadata.ClientID , unverifiedClaims.Issuer)
+	logger.Info(ctx, fmt.Sprintf("Validating Client metadata: %+v Issuer: %s", metadata.ClientID, unverifiedClaims.Issuer))
 	if metadata.ClientID != unverifiedClaims.Issuer {
 		return nil, fmt.Errorf("client metadata client_id does not match client assertion issuer")
 	}
@@ -333,7 +332,7 @@ func (uc *AuthUseCase) PrivateKeyJwt(ctx context.Context, clientCredential entit
     }
 
 	var scope = ""
-	var role = "order-admin-role order-all-role order-resource-role order-tool-role"
+	var role = "order-admin-role order-all-role order-resource-role order-tool-role inventory-admin-role inventory-all-role inventory-resource-role inventory-tool-role statistic-admin-role statistic-all-role statistic-compute-role inventory-a2a-skill-role"
 
 	now := time.Now()
     claims := entity.AccessTokenClaims{
