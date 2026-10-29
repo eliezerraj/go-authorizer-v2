@@ -111,11 +111,16 @@ func (p *AuthorizerController) GrantType(ctx context.Context, req external.AuthT
 	defer span.End()
 
 	clientCredential := entity.ClientCredential{
-		ClientID:  req.ClientID,
-		SecretID:  req.SecretID,
-		Resource:  req.Resource,
-		GrantType: req.GrantType,
+		ClientID:            req.ClientID,
+		SecretID:            req.SecretID,
+		Resource:            req.Resource,
+		GrantType:           req.GrantType,
+		ClientAssertion:     req.ClientAssertion,
+		ClientAssertionType: req.ClientAssertionType,
 	}
+
+	var res *entity.OAuthToken
+	var err error
 
 	switch req.GrantType {
 	case "urn:ietf:params:oauth:grant-type:token-exchange":
@@ -125,16 +130,22 @@ func (p *AuthorizerController) GrantType(ctx context.Context, req external.AuthT
 		//handleAuthorizationCode()
 
 	case "client_credentials":
-
-		res, err := p.authUseCase.ClientCredentials(ctx, clientCredential)
-		if err != nil {
-			logger.Error(ctx, "authorizer controller ClientCredentials failed", zap.Error(err))
-			return nil, err
+		if req.IsBasicAuth == true {
+			res, err = p.authUseCase.ClientCredentials(ctx, clientCredential)
+			if err != nil {
+				logger.Error(ctx, "authorizer controller ClientCredentials failed", zap.Error(err))
+				return nil, err
+			}
+		} else {
+			res, err = p.authUseCase.PrivateKeyJwt(ctx, clientCredential)
+			if err != nil {
+				logger.Error(ctx, "authorizer controller PrivateKeyJwt failed", zap.Error(err))
+				return nil, err
+			}
 		}
-		return res, nil
 	default:
 		return nil, errors.New("unsupported grant_type")
 	}
 
-	return nil, nil
+	return res, nil
 }

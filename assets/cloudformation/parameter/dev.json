@@ -1,0 +1,26 @@
+[
+  {
+    "ParameterKey": "Env",
+    "ParameterValue": "dev"
+  },
+  {
+    "ParameterKey": "RepositoryName",
+    "ParameterValue": "go-authorizer-v2"
+  },
+  {
+    "ParameterKey": "Namespace",
+    "ParameterValue": "test-a"
+  },
+  {
+    "ParameterKey": "ClusterName",
+    "ParameterValue": "arch-eks-002"
+  },
+  {
+    "ParameterKey": "ServiceAccountName",
+    "ParameterValue": "sa-go-authorizer-v2"
+  },
+  {
+    "ParameterKey": "RoleName",
+    "ParameterValue": "GoAuthorizerV2"
+  }
+]

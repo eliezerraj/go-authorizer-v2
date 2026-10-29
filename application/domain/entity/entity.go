@@ -56,13 +56,21 @@ type WellKnownJwks struct{
 	Keys	[]JWK   `json:"keys"`
 }
 
+type ClientMetadata struct {
+	ClientID string `json:"client_id"`
+	JWKSURI  string `json:"jwks_uri"`
+}
+
 type JWK struct {
     KeyID     string `json:"kid"`
-    KeyType   string `json:"kty"` // RSA
-    Algorithm string `json:"alg"` // RS256
-    Use       string `json:"use"` // sig
-    N         string `json:"n"`   // Base64URL-encoded Modulus
-    E         string `json:"e"`   // Base64URL-encoded Exponent
+    KeyType   string `json:"kty"`
+    Crv       string `json:"crv,omitempty"`
+    Algorithm string `json:"alg"`
+    Use       string `json:"use"`
+    N         string `json:"n,omitempty"`
+    E         string `json:"e,omitempty"`
+    X         string `json:"x,omitempty"`
+    Y         string `json:"y,omitempty"`
 }
 
 type OAuthToken struct {
