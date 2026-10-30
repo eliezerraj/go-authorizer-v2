@@ -29,7 +29,7 @@ Parameters:
     Default: architecture
   BusinessUnitName:
     Type: String
-    Default: architecture'
+    Default: architecture
   Customer:
     Type: String
     Default: architecture
@@ -90,7 +90,7 @@ Resources:
           Value: !Ref BusinessUnitName
         - Key: application
           Value: !Ref ApplicationName
-        - Key: Customer
+        - Key: customer
           Value: !Ref Customer
         - Key: env
           Value: !Ref Env
