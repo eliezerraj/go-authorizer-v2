@@ -25,3 +25,10 @@ spec:
               name: svc-go-authorizer-v2
               port:
                 number: 7100
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: svc-go-authorizer-v2
+              port:
+                number: 8100
