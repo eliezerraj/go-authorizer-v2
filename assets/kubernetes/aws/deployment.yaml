@@ -23,6 +23,9 @@ spec:
       - name: volume-secret
         secret:
           secretName: es-rds-arch-secret-go-authorizer-v2
+      - name: volume-keys
+        secret:
+          secretName: es-go-authorizer-v2-keys
       securityContext:
         runAsUser: 1000
         runAsGroup: 2000
@@ -36,6 +39,9 @@ spec:
         volumeMounts:
           - mountPath: "/var/pod/secret"
             name: volume-secret
+            readOnly: true
+          - mountPath: "/var/keys"
+            name: volume-keys
             readOnly: true
         resources:
            requests:
@@ -55,7 +61,10 @@ spec:
             - ALL
         ports:
         - name: http
-          containerPort: 7000
+          containerPort: 7100
+          protocol: TCP
+        - name: metrics
+          containerPort: 8100
           protocol: TCP
         readinessProbe:
             httpGet:

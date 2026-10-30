@@ -80,7 +80,7 @@ type TokenConfig struct {
 type RSAKeys struct {
 	PrivateKeyPath string `env:"RSA_PRIVATE_KEY_PATH"`
 	PublicKeyPath  string `env:"RSA_PUBLIC_KEY_PATH"`
-	KID     		string `env:"CURRENT_KID"`
+	KID     	string `env:"CURRENT_KID"`
 }
 
 type EC256Keys struct {
