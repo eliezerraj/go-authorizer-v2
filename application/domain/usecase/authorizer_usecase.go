@@ -19,7 +19,7 @@ import (
 	"github.com/go-authorizer-v2/application/infrastructure/module"
 	"github.com/go-authorizer-v2/application/infrastructure/repository"
 	"github.com/go-authorizer-v2/application/infrastructure/security"
-	"github.com/go-authorizer-v2/application/tracing"
+	"github.com/go-authorizer-v2/application/infrastructure/observability"
 
 	"go.opentelemetry.io/otel/trace"
 )
@@ -59,7 +59,7 @@ func (uc *AuthUseCase) Login(ctx context.Context, login entity.Login) (*entity.O
 	logger.Info(ctx, "Login called ")
 
 	// Tracer for OpenTelemetry
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "usecase.login", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "usecase.login", trace.SpanKindInternal)
 	defer span.End()
 
 	client := entity.Client{
@@ -107,7 +107,7 @@ func (uc *AuthUseCase) VerifyJWT(ctx context.Context, tokenString string) (*enti
 	logger.Info(ctx, "VerifyJWT called")
 
 	// Tracer for OpenTelemetry
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "usecase.verifyJWT", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "usecase.verifyJWT", trace.SpanKindInternal)
 	defer span.End()
 
 	pubKey, err := uc.keyRepository.GetActivePublicKey(ctx)
@@ -124,7 +124,7 @@ func (uc *AuthUseCase) WellKnownJwksGet(ctx context.Context) (*entity.WellKnownJ
 	logger.Info(ctx, "WellKnownJwksGet called")
 
 	// Tracer for OpenTelemetry
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "usecase.wellKnownJwksGet", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "usecase.wellKnownJwksGet", trace.SpanKindInternal)
 	defer span.End()
 
 	jwk, err := uc.keyRepository.GetAllPublicKeys(ctx)
@@ -143,7 +143,7 @@ func (uc *AuthUseCase) RefreshToken(ctx context.Context, tokenString string) (*e
 	logger.Info(ctx, "RefreshToken called")
 
 	// Tracer for OpenTelemetry
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "usecase.refreshToken", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "usecase.refreshToken", trace.SpanKindInternal)
 	defer span.End()
 
 	pubKey, err := uc.keyRepository.GetActivePublicKey(ctx)
@@ -188,7 +188,7 @@ func (uc *AuthUseCase) ClientCredentials(ctx context.Context, clientCredential e
 	logger.Info(ctx, "ClientCredentials called")
 
 	// Tracer for OpenTelemetry
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "usecase.clientCredentials", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "usecase.clientCredentials", trace.SpanKindInternal)
 	defer span.End()
 
     privKey, kid, err := uc.keyRepository.GetActivePrivateKey(ctx)
@@ -234,7 +234,7 @@ func (uc *AuthUseCase) PrivateKeyJwt(ctx context.Context, clientCredential entit
 	logger.Info(ctx, "PrivateKeyJwt called")
 
 	// Tracer for OpenTelemetry
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "usecase.privateKeyJwt", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "usecase.privateKeyJwt", trace.SpanKindInternal)
 	defer span.End()
 
 	// Extract the client assertion from the request if needed.

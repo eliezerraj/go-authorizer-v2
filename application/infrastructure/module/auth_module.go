@@ -14,7 +14,7 @@ import (
 	"github.com/eliezerraj/go-core/v3/logger"
 
 	"github.com/go-authorizer-v2/application/domain/entity"
-	"github.com/go-authorizer-v2/application/tracing"
+	"github.com/go-authorizer-v2/application/infrastructure/observability"
 	"github.com/go-authorizer-v2/application/domain/apperrors"
 )
 
@@ -39,7 +39,7 @@ func (im *AuthModule) GetJwks(ctx context.Context, endpoint string) (*entity.Wel
 	defer cancel()
 
 	// Trace
-	ctx, span := tracing.CustomStartSpanCtx(ctxHttpTimeout, "module.auth.getJwks", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctxHttpTimeout, "module.auth.getJwks", trace.SpanKindInternal)
 	defer span.End()
 
 
@@ -104,7 +104,7 @@ func (im *AuthModule) GetClientMetadata(ctx context.Context, endpoint string) (*
 	ctxHttpTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	ctx, span := tracing.CustomStartSpanCtx(ctxHttpTimeout, "module.auth.getClientMetadata", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctxHttpTimeout, "module.auth.getClientMetadata", trace.SpanKindInternal)
 	defer span.End()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)

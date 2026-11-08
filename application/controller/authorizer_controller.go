@@ -11,7 +11,7 @@ import (
 	"github.com/go-authorizer-v2/application/domain/usecase"
 	"github.com/go-authorizer-v2/application/domain/external"
 	"github.com/go-authorizer-v2/application/domain/entity"
-	"github.com/go-authorizer-v2/application/tracing"
+	"github.com/go-authorizer-v2/application/infrastructure/observability"
 	"github.com/go-authorizer-v2/application/controller/validator"
 
 	"go.opentelemetry.io/otel/trace"
@@ -44,7 +44,7 @@ func (p *AuthorizerController) Login(ctx context.Context, req external.LoginRequ
 	logger.Info(ctx, "authorizer controller Login called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.login", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "controller.login", trace.SpanKindInternal)
 	defer span.End()
 
 	login := entity.Login{
@@ -66,7 +66,7 @@ func (p *AuthorizerController) VerifyJWT(ctx context.Context, req external.Verif
 	logger.Info(ctx, "VerifyJWT called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.verifyJWT", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "controller.verifyJWT", trace.SpanKindInternal)
 	defer span.End()
 
 	return p.authUseCase.VerifyJWT(ctx, req.Token)
@@ -76,7 +76,7 @@ func (p *AuthorizerController) WellKnownJwksGet(ctx context.Context) (*entity.We
 	logger.Info(ctx, "WellKnownJwks called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.wellKnownJwksGet", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "controller.wellKnownJwksGet", trace.SpanKindInternal)
 	defer span.End()
 
 	return p.authUseCase.WellKnownJwksGet(ctx)
@@ -86,7 +86,7 @@ func (p *AuthorizerController) RefreshToken(ctx context.Context, req external.Ve
 	logger.Info(ctx, "RefreshToken called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.refreshToken", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "controller.refreshToken", trace.SpanKindInternal)
 	defer span.End()
 
 	return p.authUseCase.RefreshToken(ctx, req.Token)
@@ -96,7 +96,7 @@ func (p *AuthorizerController) VerifyES256JWT(ctx context.Context, req external.
 	logger.Info(ctx, "VerifyES256JWT called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.verifyES256JWT", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "controller.verifyES256JWT", trace.SpanKindInternal)
 	defer span.End()
 
 	return p.apiKeyUseCase.VerifyJwtES256(ctx, req.Token)
@@ -107,7 +107,7 @@ func (p *AuthorizerController) GrantType(ctx context.Context, req external.AuthT
 	logger.Info(ctx, "GrantType called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.grantType:"+req.GrantType, trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "controller.grantType:"+req.GrantType, trace.SpanKindInternal)
 	defer span.End()
 
 	clientCredential := entity.ClientCredential{
