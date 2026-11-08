@@ -10,7 +10,7 @@ import (
 	"github.com/go-authorizer-v2/application/config"
 	"github.com/go-authorizer-v2/application/infrastructure/application"
 	"github.com/go-authorizer-v2/application/domain/external"
-	"github.com/go-authorizer-v2/application/tracing"
+	"github.com/go-authorizer-v2/application/infrastructure/observability"
 
 	"github.com/eliezerraj/go-core/v3/logger"
 	"github.com/eliezerraj/go-core/v3/http/utils"
@@ -55,7 +55,7 @@ func (a *ApplicationAdapter) Login(ctxFiber fiber.Ctx) error {
 	defer cancel()
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.login", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctxWithTimeout, "adapter.login", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -113,7 +113,7 @@ func (a *ApplicationAdapter) VerifyJWT(ctxFiber fiber.Ctx) error {
 	defer cancel()
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.verifyJWT", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctxWithTimeout, "adapter.verifyJWT", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -176,7 +176,7 @@ func (a *ApplicationAdapter) WellKnownJwksGet(ctxFiber fiber.Ctx) error {
 	defer cancel()
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.wellKnownJwksGet", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctxWithTimeout, "adapter.wellKnownJwksGet", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -216,7 +216,7 @@ func (a *ApplicationAdapter) RefreshToken(ctxFiber fiber.Ctx) error {
 	defer cancel()
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.refreshToken", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctxWithTimeout, "adapter.refreshToken", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -274,7 +274,7 @@ func (a *ApplicationAdapter) VerifyES256JWT(ctxFiber fiber.Ctx) error {
 	defer cancel()
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.verifyES256JWT", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctxWithTimeout, "adapter.verifyES256JWT", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -333,7 +333,7 @@ func (a *ApplicationAdapter) AuthToken(ctxFiber fiber.Ctx) error {
 	defer cancel()
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.authToken", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctxWithTimeout, "adapter.authToken", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Info(

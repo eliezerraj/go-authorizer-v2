@@ -12,7 +12,6 @@ openssl genrsa -out rsa_private_key.pem 3072
 openssl rsa -in rsa_private_key.pem -pubout -out rsa_public_key.pem
 ```
 
-
 grant_type = WHAT the client wants
 client_assertion = WHO the client is
 
